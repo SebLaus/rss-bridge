@@ -9,26 +9,26 @@ class IdealoBridge extends BridgeAbstract
     const CACHE_TIMEOUT = 60 * 30; // 30 min
     const PARAMETERS = [
         [
-            'link' => [
+            'Link' => [
                 'name'          => 'idealo.de / idealo.fr / idealo.es Link to productpage',
                 'required'      => true,
                 'exampleValue'  => 'https://www.idealo.de/preisvergleich/OffersOfProduct/202007367_-s7-pro-ultra-roborock.html'
             ],
-            'excludenew' => [
+            'ExcludeNew' => [
                 'name' => 'Priceupdate: Do not track new items',
                 'type' => 'checkbox',
                 'value' => 'c'
             ],
-            'excludeused' => [
+            'ExcludeUsed' => [
                 'name' => 'Priceupdate: Do not track used items',
                 'type' => 'checkbox',
                 'value' => 'uc'
             ],
-            'maxpricenew' => [
+            'MaxPriceNew' => [
                 'name'          => 'Pricealarm: Maximum price for new Product',
                 'type'          => 'number'
             ],
-            'maxpriceused' => [
+            'MaxPriceUsed' => [
                 'name'          => 'Pricealarm: Maximum price for used Product',
                 'type'          => 'number'
             ],
@@ -61,8 +61,8 @@ class IdealoBridge extends BridgeAbstract
             $this->saveCacheValue($keytitle, $product);
         }
 
-        $maxpriceused = $this->getInput('maxpriceused');
-        $maxpricenew = $this->getInput('maxpricenew');
+        $maxpriceused = $this->getInput('MaxPriceUsed');
+        $maxpricenew = $this->getInput('MaxPriceNew');
         $titleparts = [];
 
         $titleparts[] = $product;
@@ -107,7 +107,7 @@ class IdealoBridge extends BridgeAbstract
             'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15'
         ];
 
-        $link = $this->getInput('link');
+        $link = $this->getInput('Link');
         $html = getSimpleHTMLDOM($link, $header);
 
         // Get Productname
@@ -154,8 +154,8 @@ class IdealoBridge extends BridgeAbstract
                 $content .= "<p><b>Price New before:</b><br>$oldpricenew</p>";
             }
 
-            if ($this->getInput('maxpricenew') != '') {
-                $content .= sprintf('<p><b>Max Price New:</b><br>%s,00 €</p>', $this->getInput('maxpricenew'));
+            if ($this->getInput('MaxPriceNew') != '') {
+                $content .= sprintf('<p><b>Max Price New:</b><br>%s,00 €</p>', $this->getInput('MaxPriceNew'));
             }
 
             if (isset($PriceUsed) && $PriceUsed > 1) {
@@ -163,8 +163,8 @@ class IdealoBridge extends BridgeAbstract
                 $content .= "<p><b>Price Used before:</b><br>$oldpriceused</p>";
             }
 
-            if ($this->getInput('maxpriceused') != '') {
-                $content .= sprintf('<p><b>Max Price Used:</b><br>%s,00 €</p>', $this->getInput('maxpriceused'));
+            if ($this->getInput('MaxPriceUsed') != '') {
+                $content .= sprintf('<p><b>Max Price Used:</b><br>%s,00 €</p>', $this->getInput('MaxPriceUsed'));
             }
 
             $content .= "<img src=$image>";
@@ -175,8 +175,8 @@ class IdealoBridge extends BridgeAbstract
             $pricealarm = 'Pricealarm %s: %s %s %s';
 
             // Currently under Max new price
-            if ($this->getInput('maxpricenew') != '') {
-                if (isset($pricenew) && $pricenew < $this->getInput('maxpricenew')) {
+            if ($this->getInput('MaxPriceNew') != '') {
+                if (isset($pricenew) && $pricenew < $this->getInput('MaxPriceNew')) {
                     $title = sprintf($pricealarm, 'New', $pricenew, $productname, $now);
                     $item = [
                         'title'     => $title,
@@ -190,7 +190,7 @@ class IdealoBridge extends BridgeAbstract
 
             // Currently under Max used price
             if ($this->getInput('MaxPriceUsed') != '') {
-                if (isset($priceused) && $priceused < $this->getInput('maxpriceused')) {
+                if (isset($priceused) && $priceused < $this->getInput('MaxPriceUsed')) {
                     $title = sprintf($pricealarm, 'Used', $priceused, $productname, $now);
                     $item = [
                         'title'     => $title,
@@ -203,19 +203,19 @@ class IdealoBridge extends BridgeAbstract
             }
 
             // General Priceupdate
-            if ($this->getInput('maxpriceused') == '' && $this->getInput('maxpricenew') == '') {
+            if ($this->getInput('MaxPriceUsed') == '' && $this->getInput('MaxPriceNew') == '') {
                 // check if a relevant pricechange happened
                 if (
-                    (!$this->getInput('excludenew') && $pricenew != $oldpricenew ) ||
-                    (!$this->getInput('excludeused') && $priceused != $oldpriceused )
+                    (!$this->getInput('ExcludeNew') && $pricenew != $oldpricenew ) ||
+                    (!$this->getInput('ExcludeUsed') && $priceused != $oldpriceused )
                 ) {
                     $title = 'Priceupdate! ';
 
-                    if (!$this->getInput('excludenew')) {
+                    if (!$this->getInput('ExcludeNew')) {
                         $title .= 'NEW' . $this->getPriceTrend($pricenew, $oldpricenew) . ' ';
                     }
 
-                    if (!$this->getInput('excludeused')) {
+                    if (!$this->getInput('ExcludeUsed')) {
                         $title .= 'USED' . $this->getPriceTrend($priceused, $oldpriceused) . ' ';
                     }
                     $title .= $productname;
