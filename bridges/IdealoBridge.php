@@ -9,26 +9,26 @@ class IdealoBridge extends BridgeAbstract
     const CACHE_TIMEOUT = 60 * 30; // 30 min
     const PARAMETERS = [
         [
-            'Link' => [
+            'link' => [
                 'name'          => 'idealo.de / idealo.fr / idealo.es Link to productpage',
                 'required'      => true,
                 'exampleValue'  => 'https://www.idealo.de/preisvergleich/OffersOfProduct/202007367_-s7-pro-ultra-roborock.html'
             ],
-            'ExcludeNew' => [
+            'excludenew' => [
                 'name' => 'Priceupdate: Do not track new items',
                 'type' => 'checkbox',
                 'value' => 'c'
             ],
-            'ExcludeUsed' => [
+            'excludeused' => [
                 'name' => 'Priceupdate: Do not track used items',
                 'type' => 'checkbox',
                 'value' => 'uc'
             ],
-            'MaxPriceNew' => [
+            'maxpricenew' => [
                 'name'          => 'Pricealarm: Maximum price for new Product',
                 'type'          => 'number'
             ],
-            'MaxPriceUsed' => [
+            'maxpriceused' => [
                 'name'          => 'Pricealarm: Maximum price for used Product',
                 'type'          => 'number'
             ],
@@ -46,10 +46,10 @@ class IdealoBridge extends BridgeAbstract
      */
     private function getFeedTitle()
     {
-        $cacheDuration = 604800;
+        $cacheduration = 604800;
         $link = $this->getInput('Link');
-        $keyTITLE = $link . 'TITLE';
-        $product = $this->loadCacheValue($keyTITLE, $cacheDuration);
+        $keytitle = $link . 'TITLE';
+        $product = $this->loadCacheValue($keytitle, $cacheduration);
 
         // The cache does not contain the title of the bridge, we must get it and save it in the cache
         if ($product === null) {
@@ -58,24 +58,24 @@ class IdealoBridge extends BridgeAbstract
             ];
             $html = getSimpleHTMLDOM($link, $header);
             $product = $html->find('.oopStage-title', 0)->find('span', 0)->plaintext;
-            $this->saveCacheValue($keyTITLE, $product);
+            $this->saveCacheValue($keytitle, $product);
         }
 
-        $MaxPriceUsed = $this->getInput('MaxPriceUsed');
-        $MaxPriceNew = $this->getInput('MaxPriceNew');
-        $titleParts = [];
+        $maxpriceused = $this->getInput('maxpriceused');
+        $maxpricenew = $this->getInput('maxpricenew');
+        $titleparts = [];
 
-        $titleParts[] = $product;
+        $titleparts[] = $product;
 
         // Add Max Prices to the title
-        if ($MaxPriceUsed !== null) {
-            $titleParts[] = 'Max Price Used : ' . $MaxPriceUsed . '€';
+        if ($maxpriceused !== null) {
+            $titleparts[] = 'Max Price Used : ' . $maxpriceused . '€';
         }
-        if ($MaxPriceNew !== null) {
-            $titleParts[] = 'Max Price New : ' . $MaxPriceNew . '€';
+        if ($maxpricenew !== null) {
+            $titleparts[] = 'Max Price New : ' . $maxpricenew . '€';
         }
 
-        $title = implode(' ', $titleParts);
+        $title = implode(' ', $titleparts);
 
 
         return $title . ' - ' . $this::NAME;
@@ -86,16 +86,16 @@ class IdealoBridge extends BridgeAbstract
      * Returns the Price Trend emoji
      * @return string the Price Trend Emoji
      */
-    private function getPriceTrend($NewPrice, $OldPrice)
+    private function getPriceTrend($newprice, $oldprice)
     {
-        // In case there is no old PRice, then show no trend
-        if ($OldPrice === null) {
+        // In case there is no old Price, then show no trend
+        if ($oldprice === null) {
             $trend = '';
-        } else if ($NewPrice > $OldPrice) {
+        } else if ($newprice > $oldprice) {
             $trend = '&#x2197;';
-        } else if ($NewPrice == $OldPrice) {
+        } else if ($newprice == $oldprice) {
             $trend = '&#x27A1;';
-        } else if ($NewPrice < $OldPrice) {
+        } else if ($newprice < $oldprice) {
             $trend = '&#x2198;';
         }
         return $trend;
@@ -107,64 +107,64 @@ class IdealoBridge extends BridgeAbstract
             'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15'
         ];
 
-        $link = $this->getInput('Link');
+        $link = $this->getInput('link');
         $html = getSimpleHTMLDOM($link, $header);
 
         // Get Productname
         $titleobj = $html->find('.oopStage-title', 0);
-        $Productname = $titleobj->find('span', 0)->plaintext;
+        $productname = $titleobj->find('span', 0)->plaintext;
 
         // Create product specific Cache Keys with the link
-        $KeyNEW = $link;
-        $KeyNEW .= 'NEW';
+        $keynew = $link;
+        $keynew .= 'NEW';
 
-        $KeyUSED = $link;
-        $KeyUSED .= 'USED';
+        $keyused = $link;
+        $keyused .= 'USED';
 
         // Load previous Price
-        $OldPriceNew = $this->loadCacheValue($KeyNEW);
-        $OldPriceUsed = $this->loadCacheValue($KeyUSED);
+        $oldpricenew = $this->loadCacheValue($keynew);
+        $oldpriceused = $this->loadCacheValue($keyused);
 
         // First button is new. Found at oopStage-conditionButton-wrapper-text class (.)
-        $FirstButton = $html->find('.oopStage-conditionButton-wrapper-text', 0);
-        if ($FirstButton) {
-            $PriceNew = $FirstButton->find('strong', 0)->plaintext;
+        $firstbutton = $html->find('.oopStage-conditionButton-wrapper-text', 0);
+        if ($firstbutton) {
+            $pricenew = $firstbutton->find('strong', 0)->plaintext;
             // Save current price
-            $this->saveCacheValue($KeyNEW, $PriceNew);
+            $this->saveCacheValue($keynew, $pricenew);
         }
 
         // Second Button is used
-        $SecondButton = $html->find('.oopStage-conditionButton-wrapper-text', 1);
-        if ($SecondButton) {
-            $PriceUsed = $SecondButton->find('strong', 0)->plaintext;
+        $secondbutton = $html->find('.oopStage-conditionButton-wrapper-text', 1);
+        if ($secondbutton) {
+            $priceused = $secondbutton->find('strong', 0)->plaintext;
             // Save current price
-            $this->saveCacheValue($KeyUSED, $PriceUsed);
+            $this->saveCacheValue($keyused, $priceused);
         }
 
         // Only continue if a price has changed
-        if ($PriceNew != $OldPriceNew || $PriceUsed != $OldPriceUsed) {
+        if ($pricenew != $oldpricenew || $priceused != $oldpriceused) {
             // Get Product Image
             $image = $html->find('.datasheet-cover-image', 0)->src;
 
             $content = '';
 
             // Generate Content
-            if (isset($PriceNew) && $PriceNew > 1) {
-                $content .= sprintf('<p><b>Price New:</b><br>%s %s</p>', $PriceNew, $this->getPriceTrend($PriceNew, $OldPriceNew));
-                $content .= "<p><b>Price New before:</b><br>$OldPriceNew</p>";
+            if (isset($pricenew) && $pricenew > 1) {
+                $content .= sprintf('<p><b>Price New:</b><br>%s %s</p>', $pricenew, $this->getPriceTrend($pricenew, $oldpricenew));
+                $content .= "<p><b>Price New before:</b><br>$oldpricenew</p>";
             }
 
-            if ($this->getInput('MaxPriceNew') != '') {
-                $content .= sprintf('<p><b>Max Price New:</b><br>%s,00 €</p>', $this->getInput('MaxPriceNew'));
+            if ($this->getInput('maxpricenew') != '') {
+                $content .= sprintf('<p><b>Max Price New:</b><br>%s,00 €</p>', $this->getInput('maxpricenew'));
             }
 
             if (isset($PriceUsed) && $PriceUsed > 1) {
-                $content .= sprintf('<p><b>Price Used:</b><br>%s %s</p>', $PriceUsed, $this->getPriceTrend($PriceUsed, $OldPriceUsed));
-                $content .= "<p><b>Price Used before:</b><br>$OldPriceUsed</p>";
+                $content .= sprintf('<p><b>Price Used:</b><br>%s %s</p>', $priceused, $this->getPriceTrend($priceused, $oldpriceused));
+                $content .= "<p><b>Price Used before:</b><br>$oldpriceused</p>";
             }
 
-            if ($this->getInput('MaxPriceUsed') != '') {
-                $content .= sprintf('<p><b>Max Price Used:</b><br>%s,00 €</p>', $this->getInput('MaxPriceUsed'));
+            if ($this->getInput('maxpriceused') != '') {
+                $content .= sprintf('<p><b>Max Price Used:</b><br>%s,00 €</p>', $this->getInput('maxpriceused'));
             }
 
             $content .= "<img src=$image>";
@@ -172,12 +172,12 @@ class IdealoBridge extends BridgeAbstract
 
             $now = date('d.m.j H:m');
 
-            $Pricealarm = 'Pricealarm %s: %s %s %s';
+            $pricealarm = 'Pricealarm %s: %s %s %s';
 
             // Currently under Max new price
-            if ($this->getInput('MaxPriceNew') != '') {
-                if (isset($PriceNew) && $PriceNew < $this->getInput('MaxPriceNew')) {
-                    $title = sprintf($Pricealarm, 'New', $PriceNew, $Productname, $now);
+            if ($this->getInput('maxpricenew') != '') {
+                if (isset($pricenew) && $pricenew < $this->getInput('maxpricenew')) {
+                    $title = sprintf($pricealarm, 'New', $pricenew, $productname, $now);
                     $item = [
                         'title'     => $title,
                         'uri'       => $link,
@@ -190,8 +190,8 @@ class IdealoBridge extends BridgeAbstract
 
             // Currently under Max used price
             if ($this->getInput('MaxPriceUsed') != '') {
-                if (isset($PriceUsed) && $PriceUsed < $this->getInput('MaxPriceUsed')) {
-                    $title = sprintf($Pricealarm, 'Used', $PriceUsed, $Productname, $now);
+                if (isset($priceused) && $priceused < $this->getInput('maxpriceused')) {
+                    $title = sprintf($pricealarm, 'Used', $priceused, $productname, $now);
                     $item = [
                         'title'     => $title,
                         'uri'       => $link,
@@ -203,22 +203,22 @@ class IdealoBridge extends BridgeAbstract
             }
 
             // General Priceupdate
-            if ($this->getInput('MaxPriceUsed') == '' && $this->getInput('MaxPriceNew') == '') {
+            if ($this->getInput('maxpriceused') == '' && $this->getInput('maxpricenew') == '') {
                 // check if a relevant pricechange happened
                 if (
-                    (!$this->getInput('ExcludeNew') && $PriceNew != $OldPriceNew ) ||
-                    (!$this->getInput('ExcludeUsed') && $PriceUsed != $OldPriceUsed )
+                    (!$this->getInput('excludenew') && $pricenew != $oldpricenew ) ||
+                    (!$this->getInput('excludeused') && $priceused != $oldpriceused )
                 ) {
                     $title = 'Priceupdate! ';
 
-                    if (!$this->getInput('ExcludeNew')) {
-                        $title .= 'NEW' . $this->getPriceTrend($PriceNew, $OldPriceNew) . ' ';
+                    if (!$this->getInput('excludenew')) {
+                        $title .= 'NEW' . $this->getPriceTrend($pricenew, $oldpricenew) . ' ';
                     }
 
-                    if (!$this->getInput('ExcludeUsed')) {
-                        $title .= 'USED' . $this->getPriceTrend($PriceUsed, $OldPriceUsed) . ' ';
+                    if (!$this->getInput('excludeused')) {
+                        $title .= 'USED' . $this->getPriceTrend($priceused, $oldpriceused) . ' ';
                     }
-                    $title .= $Productname;
+                    $title .= $productname;
                     $title .= ' ';
                     $title .= $now;
 
