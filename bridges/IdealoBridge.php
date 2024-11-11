@@ -157,7 +157,7 @@ class IdealoBridge extends BridgeAbstract
             $PriceNew = $ActualNewPrice->find('strong', 0)->plaintext;
             // Save current price
             $this->saveCacheValue($KeyNEW, $PriceNew);
-        } else if ($ActualNewPrice === null && $ActualUsedPrice === null && $altPrice !== null){
+        } else if ($ActualNewPrice === null && $ActualUsedPrice === null && $altPrice !== null) {
             // Get price from first List item if no New/used Buttons available
             $PriceNew = trim($altPrice->plaintext);
             $this->saveCacheValue($KeyNEW, $PriceNew);
